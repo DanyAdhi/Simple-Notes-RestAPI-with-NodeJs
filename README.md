@@ -64,3 +64,9 @@ $ npm start
 * [BodyParser](https://www.npmjs.com/package/body-parser)
 * [dotenv](https://www.npmjs.com/package/dotenv)
 * [MySQL](https://expressjs.com/en/guide/database-integration.html#mysql)
+
+<br />
+<br />
+
+## Contact
+danyadhi4149@gmail.com
