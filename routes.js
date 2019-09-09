@@ -4,9 +4,8 @@ module.exports = function(app){
 	const note 		= require('./controller/note');
 	const category 	= require('./controller/category');
 
-
+ 
 	//=============NOTE================//
-
 	// GET
 	app.get('/notes', note.getNotes);
 	app.get('/notes/:idCategory', note.noteByCategory);
@@ -20,8 +19,6 @@ module.exports = function(app){
 
 
 	//=============CATEGORY================//
-
-	// ROUTES CATEGORIES
 	// GET
 	app.get('/category', category.getCategories);
 	app.get('/category/:id', category.categoryById);

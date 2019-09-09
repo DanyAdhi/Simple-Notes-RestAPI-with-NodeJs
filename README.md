@@ -1,4 +1,4 @@
-<h1 align="center">Simple Notes/ Rest API with NodeJs</h1>
+<h1 align="center">Simple Notes with RESTfull API</h1>
 
 <div align="center">
   <a href="#">
@@ -15,15 +15,6 @@
 
 ## Introduction
 This is a backend simple Notes with RESTfull API, here I Use node.js, expres js, and mysql 
-
-## Features
-available features on this repository:
-1. Crud Notes 
-2. Crud Category Notes
-3. Search Notes
-4. Sort Notes by time
-5. Pull Down to refresh
-6. Pull Up to Load-More
 
 ## Prerequiste
 - Node.js - Download and Install [Node.js](https://nodejs.org/en/)
@@ -44,15 +35,13 @@ NODE_ENV=development node server.js
 ## Installation
 ### Clone
 ```
-$ git clone https://github.com/DanyAdhi/Simple-Notes-RestAPI-with-NodeJs
+$ git clone https://github.com/tatasfachrul/simple-REST
 $ cd simple-REST
 $ npm install
 ```
 
 ### Start Development Server
 ```
-$ create database 'a_note' on your sql server
-$ Import database 'a_note' to your database
 $ npm start
 ```
 
@@ -64,9 +53,3 @@ $ npm start
 * [BodyParser](https://www.npmjs.com/package/body-parser)
 * [dotenv](https://www.npmjs.com/package/dotenv)
 * [MySQL](https://expressjs.com/en/guide/database-integration.html#mysql)
-
-<br />
-<br />
-
-## Contact
-danyadhi4149@gmail.com

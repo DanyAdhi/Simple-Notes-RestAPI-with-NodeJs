@@ -1,6 +1,4 @@
 'use strict'
-
-const response 	= require('../response');
 const connection= require('../connect');
 
 
@@ -11,24 +9,27 @@ exports.getNotes = function(req, res){
 	const page 			= parseInt(req.query.page || 1);
 	const limit 		= parseInt(req.query.limit || 10);
 	const offset 		= ((page - 1)*limit ) || 0;
-	const idCategory	= req.query.category || ''
 
-	const query 		=  `SELECT note.idNote, note.title, note.note, note.time, note.category as idCategory, category.category  FROM note LEFT JOIN category ON note.category=category.id WHERE note.title LIKE '%${title}%'  ORDER BY note.time ${sort} LIMIT ${limit} OFFSET ${offset}`;
+	const query 		=  `SELECT note.idNote, note.title, note.note, note.time,note.category AS idCategory, category.category  FROM note 
+	LEFT JOIN category ON note.category=category.id
+	WHERE note.title LIKE '%${title}%'
+	ORDER BY note.time ${sort} 
+	LIMIT ${limit} OFFSET ${offset}`;
 	
 	connection.query(
-		`SELECT count(*) as total from note where title  LIKE '%${title}%' `,function(error, rows){
+		`SELECT count(*) as total from note where title  LIKE '%${title}%' `, 
+		function(error, rows){
 			if(error){
-				throw error;
+				console.log(error);
 			}else{
-
 				const total 		= rows[0].total;
 				const totalPage 	= Math.ceil(total/limit);
 				
 				connection.query(
 					query,
-					function(error, rows, field){
-						if(error){
-							throw error;
+					function(err, rows){
+						if(err){
+							console.log(err);
 						}else{
 							if(rows!=''){
 								return res.send({
@@ -70,22 +71,15 @@ exports.createNote = function(req, res){
 		connection.query(
 			`Insert into note set title=?, note=?, category=?`,
 			[title, note, category],
-			function(error, rows, field){
+			async function(error, rows){
 				if(error){
-					throw error;
+					console.log(error);
 				}else{
-					connection.query(
-						`SELECT note.idNote, note.title, note.note, note.time, note.category as idCategory, category.category  FROM note LEFT JOIN category ON note.category=category.id ORDER BY note.time DESC LIMIT 1`, function(error, rows, field){
-							if(error){
-								console.log(error);
-							}else{
-								return res.send({
-									data 	: rows,
-									message : "Data has been saved"
-								})
-							}
-						}
-					)
+					let getData = await getById(rows.insertId) //ambil id terakhir
+					return res.status(200).send({
+						data: getData,
+						message: "Data has been saved"
+					})
 				}
 			}
 		)
@@ -93,8 +87,7 @@ exports.createNote = function(req, res){
 }
 
 
-
-exports.updateNote = function(req, res, next){
+exports.updateNote = async(req, res)=>{
 
 	const title 		= req.body.title;
 	const note 			= req.body.note;
@@ -102,10 +95,11 @@ exports.updateNote = function(req, res, next){
 	const id 			= req.params.id;
 
 	connection.query(
-		`select * from note where idNote=?`,[id],
-		function(error, rows, field){
+		`select * from note where idNote=?`,
+		[id],
+		async function(error, rows){
 			if(error){
-				throw error;
+				console.log(error);
 			}else{
 				if(rows != ""){
 					if(!title){
@@ -115,30 +109,13 @@ exports.updateNote = function(req, res, next){
 					}else if( !category ){
 						res.status(400).send ({ message : 'Category is require' });
 					}else{
-						connection.query(
-							`Update note set title=?, note=?, category=? where idNote=?`,
-							[title, note, category, id],
-							function(error, rows, field){
-								if(error){
-									throw error;
-								}else{
-									connection.query(
-										`SELECT note.idNote, note.title, note.note, note.time, note.category as idCategory, category.category  FROM note LEFT JOIN category ON note.category=category.id ORDER BY note.time DESC LIMIT 1`,
-										function(error, rows, field){
-											if(error){
-												console.log(error);
-											}else{
-												return res.send({
-													data 	: rows,
-													message : 'Data has been updated'
-												})
+						let updateData = await update(title, note, category, id)
+						let getData = await getById(updateData)
 
-											}
-										}
-									)
-								}
-							}
-						)
+						res.status(200).send({
+							data:getData,
+							message: 'Data has been updated'
+						})
 					}
 				}else{
 					res.status(400).send ({ message : 'Id not valid.' })
@@ -149,17 +126,16 @@ exports.updateNote = function(req, res, next){
 }
 
 
-
-exports.deleteNote = function(req, res, next){
+exports.deleteNote = function(req, res){
 
 	const id = req.params.id;
 
 	connection.query(
 		`Delete from note where idNote=?`,
 		[id],
-		function(error, rows, field){
+		function(error, rows){
 			if(error){
-				throw error;
+				console.log(error);
 			}else{
 				if(rows.affectedRows != ""){
 					return res.send({
@@ -177,44 +153,26 @@ exports.deleteNote = function(req, res, next){
 }
 
 
-
-exports.noteById = function(req, res) {
+exports.noteById = async function(req, res) {
 	
-	const id = req.params.id;
+	const id = req.query.idNote;
 
-	connection.query(
-		`Select note.title, note.note, note.time, category.category  From note left join category on note.category=category.id where note.idNote=?`,
-		[id],
-		function(error, rows, field) {
-			if(error) {
-				throw error;
-			} else {
-				if (rows != "") {
-					return res.send ({
-						data : rows,
-					})	
-				} else {
-					return res.send ({
-						message : "Data not found. cuk"
-					})
-				}
-			}
-		}
-	)
+	let getData = await getById(id)
+	console.log(getData)
 }
 
 
 
-exports.searchByTitle = function(req, res, next){
+exports.searchByTitle = function(req, res){
 	
 	const title = req.query.search;
 	
 	connection.query(
 		`Select note.title, note.note, note.time, category.category  From note left join category on note.category=category.id WHERE note.title LIKE ?`,
 		[title],
-		function(error, rows, field){
+		function(error, rows){
 			if(error){
-				throw error;
+				console.log(error);
 			}else{
 				if(rows != ""){
 					return res.send({
@@ -236,20 +194,20 @@ exports.noteByCategory = function(req, res) {
 
 	connection.query(
 		`SELECT count(*) as total from note where category='${idCategory}'`,
-		function(error, rows, field) {
+		function(error, rows) {
 			if(error) {
-				throw error;
+				console.log(error);
 			} else {
 
 				const total 		= rows[0].total;
 				const totalPage		= Math.ceil(total/100);
 				connection.query(
 					`SELECT note.idNote, note.title, note.note, note.time, note.category as idCategory, category.category  FROM note LEFT JOIN category ON note.category=category.id WHERE note.category='${idCategory}' LIMIT 100`,
-					function(error, rowss, field){
+					function(error, rows){
 							if (rows != "") {
 								return res.send ({
-									data 		: rowss,
-									totalPage	: 1
+									data 		: rows,
+									totalPage	: totalPage
 								})	
 							} else {
 								return res.send ({
@@ -262,3 +220,41 @@ exports.noteByCategory = function(req, res) {
 		}
 	)
 }
+
+
+function getById(id){
+	return new Promise(resolve=>{
+		connection.query(
+			`Select note.idNote, note.title, note.note, note.time, note.category as idCategory, category.category  From note 
+			left join category on note.category=category.id 
+			where note.idNote=?`,
+			[id],
+			function(err, rows){
+				if(err){
+					res.send(console.log(err))
+				}else{
+					resolve(rows)
+				}
+			}
+		)
+	})
+}
+
+
+function update(title, note, category, id){
+	console.log(id)
+	return new Promise(resolve=>{
+		connection.query(
+			`Update note set title=?, note=?, category=? where idNote=?`, //query update
+			[title, note, category, id],
+			function(error){
+				if(error){
+					console.log(error)
+				}else{
+					resolve(id)
+				}
+			}
+		)
+	})
+}
+
